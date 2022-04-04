@@ -46,10 +46,10 @@ def ilp(points,sample_size):
         for j in range(i+1,num_a):
             a_combinations.append((i,j))
     c_b=[proximity(points[a_combinations[i][0]],points[a_combinations[i][1]]) for i in range(num_b)]
-    print(c_b)
+    # print(c_b)
     # end=time()
     # print(end-start)
-    exit(0)
+    # exit(0)
     c_a=[0 for i in range(num_a)]
     c=c_b+c_a
     for b_index in range(num_b):
@@ -119,21 +119,22 @@ def get_obj(samples,size):
     return np.around(obj,2)
 def main():
     # pass
-    df=pd.read_csv('/users/yiwei/data/Data/000/Trajectory/20081023025304.plt',sep=',',names=['Latitude','Longitude','0','1','2','3','4'],skiprows=6)
+    df=pd.read_csv('data/Data/000/Trajectory/20081023025304.plt',sep=',',names=['Latitude','Longitude','0','1','2','3','4'],skiprows=6)
     # tmp=df.loc[:3,['Longitude','Latitude']].values.tolist()
     # print(tmp)
-    point_set=np.array(df.loc[:9,['Longitude','Latitude']].values.tolist())
+    point_set=np.array(df.loc[:39,['Longitude','Latitude']].values.tolist())
     sample_size=10
     start=time()
     # set_epsilon(point_set)
     # print(epsilon)
     ilp_samples=ilp(point_set,[sample_size])
+    np.save(file='ilp_40.npy',arr=ilp_samples)
+
     end=time()
     print('time: {} min {} s'.format((end-start)//60,(end-start)%60))
     print(point_set.shape)
     # print(epsilon)
-    print(get_obj(ilp_samples[0],sample_size))
-    # print(len(samples))
+    # print(get_obj(ilp_samples[0],sample_size))
 
 if __name__=='__main__':
     main()

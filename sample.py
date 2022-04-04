@@ -5,6 +5,7 @@ import pandas as pd
 from cvxopt import glpk,matrix
 from random import randint, random,seed
 from utils import *
+from time import time
 # epsilon=3.2147064340016937e-07
 class ilp:
     def __init__(self,prox:proximity) -> None:
@@ -133,7 +134,7 @@ class interchange:
             else:
                 r=self.expand(r,point)
                 r=self.shrink(r)
-        s=[point[0] for point in r]
+        s=[point[0] for point in r] #(coordinates,responsibility) for each point in r
         return np.array(s)
         # print(s)
 def ReservoirSample(point_set,sample_size):
@@ -163,20 +164,24 @@ def Stratified_sampling(point_set,sample_size,bin_num=100):
     return samples
         
 if __name__=='__main__':
-    df=pd.read_csv('/users/yiwei/data/Data/000/Trajectory/20081023025304.plt',sep=',',names=['Latitude','Longitude','0','1','2','3','4'],skiprows=6)
+    df=pd.read_csv('data/Data/000/Trajectory/20081023025304.plt',sep=',',names=['Latitude','Longitude','0','1','2','3','4'],skiprows=6)
     # tmp=df.loc[:3,['Longitude','Latitude']].values.tolist()
     # print(tmp)
-    point_set=np.array(df.loc[:29,['Longitude','Latitude']].values.tolist())
+    point_set=np.array(df.loc[:6,['Longitude','Latitude']].values.tolist())
     # print(point_set[:3])
     # epsilon= np.power(get_epsilon(point_set),2)*2
     # print(epsilon)
-    prox=proximity(point_set)
-    # int_sample=interchange(prox)
-    # a=int_sample.run(point_set,5)
-    ilp_sample=ilp(prox)
-    a=ilp_sample.run(point_set,[10])
-    print(a)
-    print(prox.epsilon)
+    prox=proximity(point_set,set_eps=False)
+    start=time()
+    int_sample=interchange(prox)
+    a=int_sample.run(point_set,2)
+    # ilp_sample=ilp(prox)
+    # a=ilp_sample.run(point_set,[10])
+    end=time()
+    print('time: {} min {} s'.format((end-start)//60,(end-start)%60))
+    # print(a)
+    # print(prox.epsilon)
+
     # ReservoirSample(point_set,2)
     # a=Stratified_sampling(point_set,100,10)
     # print(a.shape)
