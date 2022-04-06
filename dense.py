@@ -1,4 +1,3 @@
-from platform import node
 import numpy as np
 import heapq
 import pandas as pd
@@ -162,6 +161,14 @@ if __name__=='__main__':
     # print(list(subgraph))
     print(get_obj(point_set[list(subgraph)],k))
     # print(subgraph)
+
+    # get_adj_mat(point_set,sample_size)
+    # get_heaps()
+    # subgraph=dense_k(sample_size)
+    # dk_samples=point_set[list(subgraph)]
+    # dk_x=dk_samples[:,0]
+    # dk_y=dk_samples[:,1]
+    # plot.scatter(dk_x,dk_y,c='b')
 
 
 
