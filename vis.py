@@ -1,5 +1,6 @@
 import signal
 import time
+from tracemalloc import start
 from utils import *
 import numpy as np
 # pool=[]
@@ -51,10 +52,10 @@ class interchange:
             start=time.time()
             # for point in point_set:
             while idx<set_size:
-                point=point_set[idx]
                 if time.time()-start>timeout:
                     # print(time.ctime())
                     break
+                point=point_set[idx]
                 if len(pool)<k:
                     pool=self.expand(pool,point)
                 else:
@@ -83,11 +84,15 @@ for file in os.listdir(plt_root_path)[1:]:
     point_set_size+=df_points.shape[0]
     if point_set_size>threshold:
         break
+start=time.time()
+np.random.seed(0)
+point_set=np.random.permutation(point_set)
+print(time.time()-start)
 # signal.signal(signal.SIGALRM, handler)
 # signal.alarm(2)
-prox=proximity(point_set,set_eps=True)
-int_generator=interchange(prox)
-int_samples=int_generator.run(point_set,500,10,5)
-print(int_samples.shape)
+# prox=proximity(point_set,set_eps=False)
+# int_generator=interchange(prox)
+# int_samples=int_generator.run(point_set,500,1.2,1)
+# print(int_samples.shape)
 # time.sleep(4)
 # print ("interrupted in {}".format(time.ctime()))
