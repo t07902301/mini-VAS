@@ -1,26 +1,12 @@
+'''
+A package for BLP/ILP(Integer Linear Programming)
+'''
 import numpy as np
 import pandas as pd
 from cvxopt import glpk,matrix
 from time import time
 # from utils import *
 epsilon=3.2147064340016937e-07
-# epsilon=2.714144000044176e-10
-# epsilon=1
-# def set_epsilon(point_set):
-#     max_norm=0
-#     i=0
-#     point_set_size=point_set.shape[0]
-#     while i <point_set_size-1:
-#         j=i+1
-#         while j<point_set_size-1:
-#             norm=np.linalg.norm(point_set[i]-point_set[j])
-#             if max_norm<norm:
-#                 max_norm=norm  
-#             j+=1
-#         i+=1
-#     # return max_norm/100
-#     global epsilon
-#     epsilon=max_norm/100
 def proximity(point_1,point_2):
     # if np.sum(np.where((point_1==point_2),0,1))==0:
     #     return 0

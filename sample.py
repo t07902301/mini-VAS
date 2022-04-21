@@ -1,13 +1,167 @@
-# def get_rsp(point):
-#     pass
+'''
+A package for Interchange, Resevior and Stratified
+'''
+
 import numpy as np
 import pandas as pd
-from cvxopt import glpk,matrix
+# from cvxopt import glpk,matrix
 from random import randint, random,seed
 from utils import *
-from time import time
-# epsilon=3.2147064340016937e-07
-class ilp:
+import time
+
+class interchange:
+    def __init__(self,prox:proximity) -> None:
+        self.proximity=prox
+    
+    def expand(self,r,test_point):
+        rsp=0
+        for index,each in enumerate(r):
+            rplc_point,rplc_rsp=each
+            tmp_rsp=self.proximity.run(test_point,rplc_point)
+            rplc_rsp+=tmp_rsp
+            rsp+=tmp_rsp
+            r[index]=(rplc_point,rplc_rsp)
+        r.append((test_point,rsp))
+        return r
+    def max_rsp(self,r):
+        rsp_max=0
+        rsp_max_index=0
+        for index,each in enumerate(r):
+            point,rsp=each
+            if rsp_max<rsp:
+                rsp_max=rsp
+                rsp_max_index=index
+        return rsp_max_index
+    def shrink(self,r):
+        rsp_max_index=self.max_rsp(r)
+        removed_point=r[rsp_max_index][0]
+        del r[rsp_max_index]
+        for index,each in enumerate(r):
+            point,rsp=each
+            rsp-=self.proximity.run(removed_point,point)
+            r[index]=(point,rsp)
+        return r
+    def run(self,point_set,k):
+        r=[]
+        for point in point_set:
+            if len(r)<k:
+                r=self.expand(r,point)
+            else:
+                r=self.expand(r,point)
+                r=self.shrink(r)
+        s=[point[0] for point in r] #(coordinates,responsibility) for each point in r
+        return np.array(s)
+def ReservoirSample(point_set,sample_size):
+    seed(0)
+    pool=point_set[:sample_size]
+    for i,point in enumerate(point_set[sample_size:]):
+        j=randint(0,i)
+        if j<sample_size:
+            pool[j]=point
+    return np.array(pool)
+def Stratified_sampling(point_set,sample_size,bin_num=100):
+    seed(0)
+    # point_set_size=point_set.shape[0]
+    bin_size=point_set.shape[0]//bin_num
+    sample_size_per_bin=sample_size//bin_num
+    bin_samples=[]
+    for i in range(bin_num):
+        bin=point_set[i*bin_size:(i+1)*bin_size]
+        bin_samples.append(ReservoirSample(bin,sample_size_per_bin))
+        
+    samples=bin_samples[0]
+    for i in range(1,bin_num):
+        # print(bin_samples[i].shape)
+        samples=np.concatenate((samples,bin_samples[i]))
+    # print(samples)
+    return samples
+class interchange_timer:
+    def __init__(self,prox:proximity) -> None:
+        self.proximity=prox
+    
+    def expand(self,r,test_point):
+        rsp=0
+        for index,each in enumerate(r):
+            rplc_point,rplc_rsp=each
+            tmp_rsp=self.proximity.run(test_point,rplc_point)
+            rplc_rsp+=tmp_rsp
+            rsp+=tmp_rsp
+            r[index]=(rplc_point,rplc_rsp)
+        r.append((test_point,rsp))
+        return r
+    def max_rsp(self,r):
+        rsp_max=0
+        rsp_max_index=0
+        for index,each in enumerate(r):
+            point,rsp=each
+            if rsp_max<rsp:
+                rsp_max=rsp
+                rsp_max_index=index
+        return rsp_max_index
+    def shrink(self,r):
+        rsp_max_index=self.max_rsp(r)
+        removed_point=r[rsp_max_index][0]
+        del r[rsp_max_index]
+        for index,each in enumerate(r):
+            point,rsp=each
+            rsp-=self.proximity.run(removed_point,point)
+            r[index]=(point,rsp)
+        return r
+    def run(self,point_set,k,timeout,stop_points):
+        # global pool
+        pool=[]
+        i=0
+        idx=0
+        set_size=point_set.shape[0]
+        print(set_size)
+        while i<stop_points:
+            i+=1
+            start=time.time()
+            # for point in point_set:
+            while idx<set_size:
+                if time.time()-start>timeout:
+                    print(time.ctime())
+                    break
+                point=point_set[idx]
+                if len(pool)<k:
+                    pool=self.expand(pool,point)
+                else:
+                    pool=self.expand(pool,point)
+                    pool=self.shrink(pool)
+                idx+=1
+            print(idx,len(pool))
+            s=[point[0] for point in pool] #(coordinates,responsibility) for each point in r
+            np.save('stop_points/int_{}_{}_{}_{}.npy'.format(set_size,timeout,i,k),s)
+            print('save {}th file'.format(i))
+        return np.array(s)
+        
+if __name__=='__main__':
+    df=pd.read_csv('data/Data/000/Trajectory/20081023025304.plt',sep=',',names=['Latitude','Longitude','0','1','2','3','4'],skiprows=6)
+    # tmp=df.loc[:3,['Longitude','Latitude']].values.tolist()
+    # print(tmp)
+    point_set=np.array(df.loc[:6,['Longitude','Latitude']].values.tolist())
+    # print(point_set[:3])
+    # epsilon= np.power(get_epsilon(point_set),2)*2
+    # print(epsilon)
+    prox=proximity(point_set,set_eps=False)
+    start=time()
+    int_sample=interchange(prox)
+    a=int_sample.run(point_set,2)
+    # ilp_sample=ilp(prox)
+    # a=ilp_sample.run(point_set,[10])
+    end=time()
+    print('time: {} min {} s'.format((end-start)//60,(end-start)%60))
+    # print(a)
+    # print(prox.epsilon)
+
+    # ReservoirSample(point_set,2)
+    # a=Stratified_sampling(point_set,100,10)
+    # print(a.shape)
+
+class ilp: 
+    '''
+    Deprecated ILP wrapper
+    '''
     def __init__(self,prox:proximity) -> None:
         self.proximity=prox
     def run(self,points,sample_size):
@@ -93,95 +247,3 @@ class ilp:
         # print(G.size)
         # return points[list(set(samples))]
         return samples_list
-
-class interchange:
-    def __init__(self,prox:proximity) -> None:
-        self.proximity=prox
-    
-    def expand(self,r,test_point):
-        rsp=0
-        for index,each in enumerate(r):
-            rplc_point,rplc_rsp=each
-            tmp_rsp=self.proximity.run(test_point,rplc_point)
-            rplc_rsp+=tmp_rsp
-            rsp+=tmp_rsp
-            r[index]=(rplc_point,rplc_rsp)
-        r.append((test_point,rsp))
-        return r
-    def max_rsp(self,r):
-        rsp_max=0
-        rsp_max_index=0
-        for index,each in enumerate(r):
-            point,rsp=each
-            if rsp_max<rsp:
-                rsp_max=rsp
-                rsp_max_index=index
-        return rsp_max_index
-    def shrink(self,r):
-        rsp_max_index=self.max_rsp(r)
-        removed_point=r[rsp_max_index][0]
-        del r[rsp_max_index]
-        for index,each in enumerate(r):
-            point,rsp=each
-            rsp-=self.proximity.run(removed_point,point)
-            r[index]=(point,rsp)
-        return r
-    def run(self,point_set,k):
-        r=[]
-        for point in point_set:
-            if len(r)<k:
-                r=self.expand(r,point)
-            else:
-                r=self.expand(r,point)
-                r=self.shrink(r)
-        s=[point[0] for point in r] #(coordinates,responsibility) for each point in r
-        return np.array(s)
-        # print(s)
-def ReservoirSample(point_set,sample_size):
-    seed(0)
-    pool=point_set[:sample_size]
-    for i,point in enumerate(point_set[sample_size:]):
-        j=randint(0,i)
-        if j<sample_size:
-            pool[j]=point
-    # print(pool)
-    return np.array(pool)
-def Stratified_sampling(point_set,sample_size,bin_num=100):
-    seed(0)
-    # point_set_size=point_set.shape[0]
-    bin_size=point_set.shape[0]//bin_num
-    sample_size_per_bin=sample_size//bin_num
-    bin_samples=[]
-    for i in range(bin_num):
-        bin=point_set[i*bin_size:(i+1)*bin_size]
-        bin_samples.append(ReservoirSample(bin,sample_size_per_bin))
-        
-    samples=bin_samples[0]
-    for i in range(1,bin_num):
-        # print(bin_samples[i].shape)
-        samples=np.concatenate((samples,bin_samples[i]))
-    # print(samples)
-    return samples
-        
-if __name__=='__main__':
-    df=pd.read_csv('data/Data/000/Trajectory/20081023025304.plt',sep=',',names=['Latitude','Longitude','0','1','2','3','4'],skiprows=6)
-    # tmp=df.loc[:3,['Longitude','Latitude']].values.tolist()
-    # print(tmp)
-    point_set=np.array(df.loc[:6,['Longitude','Latitude']].values.tolist())
-    # print(point_set[:3])
-    # epsilon= np.power(get_epsilon(point_set),2)*2
-    # print(epsilon)
-    prox=proximity(point_set,set_eps=False)
-    start=time()
-    int_sample=interchange(prox)
-    a=int_sample.run(point_set,2)
-    # ilp_sample=ilp(prox)
-    # a=ilp_sample.run(point_set,[10])
-    end=time()
-    print('time: {} min {} s'.format((end-start)//60,(end-start)%60))
-    # print(a)
-    # print(prox.epsilon)
-
-    # ReservoirSample(point_set,2)
-    # a=Stratified_sampling(point_set,100,10)
-    # print(a.shape)
