@@ -11,8 +11,8 @@ class proximity:
         '''
 
         if set_eps==False:
-            # self.epsilon=3.2147064340016937e-07 #the size of datasets less than 2000
-            self.epsilon=3.797682913998397e-07 #2000
+            # self.epsilon=3.2147064340016937e-07 # For datasets with less than 2000 points.
+            self.epsilon=3.797682913998397e-07 # For datasets with over 2000 points.
         else:
             self.epsilon=self.set_epsilon(point_set)
     def set_epsilon(self,point_set):
