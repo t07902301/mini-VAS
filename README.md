@@ -1,4 +1,4 @@
-# mini-VAS
+# A study on sampling in big data visualization
 
 ilp.py is for solving binary/integer linear programming. The solutions of BLP on small datasets are kept as "ilp_30.npy", "ilp_40.npy", and "ilp_50.npy" for visualization later on.
 
